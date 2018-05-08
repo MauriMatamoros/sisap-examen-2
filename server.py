@@ -66,6 +66,3 @@ while True:
            dataInput = True
            message = "354 End data by pressing enter\n"
            connection.send(message.encode('utf8'))
-       if data == "quit":
-           connection.close()
-           server.close()
