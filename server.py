@@ -77,6 +77,13 @@ def clientThread(connection, address):
     while True:
             if mail.isReady():
                 listOfMailsToBeSent.append(mail)
+                file = open("mail.txt", "a")
+                file.write("FROM:" + mail.getFrom() + "\n")
+                for rcpt in mail.getTo():
+                    file.write("TO: " + rcpt + "\n")
+                file.write("Data\n")
+                file.write(mail.getData() + "\n")
+                file.close()
                 printMails(listOfMailsToBeSent)
                 mail = Mail()
             try:
@@ -123,9 +130,9 @@ def clientThread(connection, address):
                         connection.send(response.encode('utf8'))
                     elif "QUIT" in message.upper():
                         remove(connection)
-                        response = "21 Bye\n"
+                        response = "221 Bye\n"
                         logData.append(response)
-                        logData.append("<" + address[0] + " " + str(address[1]) + "> has quit")
+                        logData.append("<" + address[0] + " " + str(address[1]) + "> has quit\n")
                         connection.send(response.encode('utf8'))
                         connection.close()
                     # broadcast(messageToSend.encode('utf-8'), connection)
