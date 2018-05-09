@@ -40,6 +40,7 @@ server.listen(7)
 
 listOfClients = []
 listOfMailsToBeSent = []
+logData = []
 
 def remove(connection):
     if connection in listOfClients:
@@ -60,6 +61,14 @@ def printMails(listOfMailsToBeSent):
             print("RCPT TO: ", rcpt)
         print("DATA ", mail.getData()[:-1])
 
+def logThread(logData):
+    while True:
+        log = open("log.txt", "a")
+        for data in logData:
+            log.write(data)
+            logData.remove(data)
+        log.close()
+
 def clientThread(connection, address):
     connection.send("Welcome!\n".encode('utf-8'))
     inputData = False
@@ -75,17 +84,21 @@ def clientThread(connection, address):
                 if message:
                     message = message[:-1]
                     print("<" + address[0] + " " + str(address[1]) + "> " + message)
+                    logData.append("<" + address[0] + " " + str(address[1]) + "> " + message + "\n")
                     if inputData:
                         if message != ".":
                             data+=(message + "\n")
-                        if message == ".":
+                        else:
                             mail.setData(data)
+                            response = "250 Ok: queued as 12345\n"
+                            logData.append(response)
                             connection.send("250 Ok: queued as 12345\n".encode('utf8'))
                             inputData = False
                     elif "HELO:" in message.upper():
                         message = message.split()
                         message = message[1]
                         response = "250 " + str(message) + ", I am glad to meet you\n"
+                        logData.append(response)
                         connection.send(response.encode('utf8'))
                     elif "MAIL FROM:" in message.upper():
                         message = message.split(' ')
@@ -93,6 +106,7 @@ def clientThread(connection, address):
                         message.pop(0)
                         mail.setFrom(message[0])
                         response = "250 ok\n"
+                        logData.append(response)
                         connection.send(response.encode('utf8'))
                     elif "RCPT TO:" in message.upper():
                         message = message.split(' ')
@@ -100,24 +114,32 @@ def clientThread(connection, address):
                         message.pop(0)
                         mail.setTo(message[0])
                         response = "250 ok\n"
+                        logData.append(response)
                         connection.send(response.encode('utf8'))
                     elif "DATA" in message.upper():
                         inputData = True
-                        connection.send("354 End data with <CR><LF>.<CR><LF>\n".encode('utf8'))
+                        response = "354 End data with <CR><LF>.<CR><LF>\n"
+                        logData.append(response)
+                        connection.send(response.encode('utf8'))
                     elif "QUIT" in message.upper():
                         remove(connection)
-                        connection.send("21 Bye\n".encode('utf8'))
+                        response = "21 Bye\n"
+                        logData.append(response)
+                        logData.append("<" + address[0] + " " + str(address[1]) + "> has quit")
+                        connection.send(response.encode('utf8'))
                         connection.close()
                     # broadcast(messageToSend.encode('utf-8'), connection)
             except:
                 continue
 
+_thread.start_new_thread(logThread, (logData,))
 while True:
 
     connection, address = server.accept()
+    logData.append("<" + address[0] + " " + str(address[1]) + "> has connected\n")
     listOfClients.append(connection)
     print(address[0] + " connected")
-    _thread.start_new_thread(clientThread,(connection, address))
+    _thread.start_new_thread(clientThread, (connection, address))
 
 conn.close()
 server.close()
