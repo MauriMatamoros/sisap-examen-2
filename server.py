@@ -1,68 +1,72 @@
 import socket
 import sys
-import traceback
-from threading import Thread
+import _thread
 
-import users
-import messages
+class Message:
+    def __init__(self):
+        self.data = ""
+        self.fromUser = ""
+        self.to = ""
+    def getData(self):
+        return self.data
+    def getFrom(self):
+        return self.fromUser
+    def getTo(self):
+        return self.to
+    def setData(self, data):
+        self.data = data
+    def setFrom(self, fromUser):
+        self.fromUser = fromUser
+    def setTo(self, to):
+        self.to = to
+    def isReady(self):
+        if len(self.data) > 1 and len(self.fromUser) > 1 and len(self.to) > 1:
+            return True
+        else:
+            return False
 
-host = "0.0.0.0"
-port = 3555
-ips = open("ips.txt", "r")
-lines = ips.readlines()
-userList = []
-
-for i in lines:
-    data = i[:-1].split()
-    userList.append(users.User(data[0], data[1]))
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((host, port))
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-server.listen(6)
+if len(sys.argv) != 3:
+    print("Correct usage: script, IP address, port number")
+    exit()
 
+ipAddress = str(sys.argv[1])
+port = int(sys.argv[2])
 
-mail = messages.Message()
+server.bind((ipAddress, port))
+server.listen(7)
+
+listOfClients = []
+
+def broadcast(message, connection):
+    for client in listOfClients:
+        if client != connection:
+            try:
+                client.send(message)
+            except:
+                continue
+
+def clientThread(connection, address):
+    connection.send("Welcome!\n".encode('utf-8'))
+    while True:
+            try:
+                message = connection.recv(2048).decode('utf8')
+                if message:
+                    print("<" + address[0] + " " + address[1] + "> " + message[:-1])
+                    messageToSend = "<" + address[0] + "> " + message
+                    # broadcast(messageToSend.encode('utf-8'), connection)
+            except:
+                continue
+
 while True:
-   connection, address = server.accept()
-   print("Got a connection from %s" % str(address))
-   dataInput = False
-   message = 'Thank you for connecting\n'
-   connection.send(message.encode('utf8'))
-   while True:
-       data = connection.recv(1024).decode('utf8')[:-1]
-       print(data)
-       if mail.isReady():
-           print(mail.getFrom())
-           print(mail.getTo())
-           print(mail.getData())
-       if "HELO" in data.upper():
-           data = data.split()
-           data = data[1]
-           mail.setFrom(data)
-           message = "250 " + data + ", I am glad to meet you\n"
-           connection.send(message.encode('utf8'))
-       elif "MAIL FROM" in data.upper():
-           data = data.split(' ')
-           data.pop(0)
-           data.pop(0)
-           data = " ".join(str(x) for x in data)
-           message = "250 ok\n"
-           connection.send(message.encode('utf8'))
-       elif "RCPT TO" in data.upper():
-           data = data.split(' ')
-           data.pop(0)
-           data.pop(0)
-           data = " ".join(str(x) for x in data)
-           mail.setTo(data)
-           message = "250 ok\n"
-           connection.send(message.encode('utf8'))
-       elif dataInput:
-           mail.setData(data)
-           message = "End data by pressing enter\n"
-           connection.send(message.encode('utf8'))
-           dataInput = False
-       elif "DATA" in data.upper():
-           dataInput = True
-           message = "354 End data by pressing enter\n"
-           connection.send(message.encode('utf8'))
+
+    connection, address = server.accept()
+    listOfClients.append(connection)
+    print(address[0] + " connected")
+    _thread.start_new_thread(clientThread,(connection, address))
+
+conn.close()
+server.close()
