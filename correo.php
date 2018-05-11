@@ -12,6 +12,7 @@
       <input type="submit" value="Submit">
     </form>
     <?php
+      $log = fopen('log.txt', 'a');
       $from = $_POST['from'];
       $to = $_POST['to'];
       $data = $_POST['data'];
@@ -23,41 +24,61 @@
         // connect to server
         $result = socket_connect($socket, $host, $port) or die("Could not connect to server\n");
         // send strings to server
-        $helo = "helo: ";
-        $heloResponse = "250 " + $from + ", I am glad to meet you\n";
-        $mailFrom = "mail from: ";
+        $helo = "helo: phpClient\n";
+        $heloResponse = "250 $from, I am glad to meet you\n";
+        $mailFrom = "mail from: $from\n";
         $mailFromResponse = "250 ok\n";
-        $from .= "\n";
-        $helo .= $from;
-        $mailFrom .= $from;
+        $dataRequest = "data\n";
+        $dataRequestResponse = "354 End data with <CR><LF>.<CR><LF>\n";
+        $data .= "\n";
+        $dataResponse = "250 Ok: queued as 12345\n";
         socket_write($socket, $helo, strlen($helo)) or die("Could not send data to server\n");
         $result = socket_read($socket, 1024) or die("Could not read server response\n");
+        fwrite($log, $result."\n");
         if (strcmp($result, $heloResponse)) {
-          sleep(0.5);
+          sleep(2);
           socket_write($socket, $mailFrom, strlen($mailFrom)) or die("Could not send data to server\n");
           $result = socket_read($socket, 1024) or die("Could not read server response\n");
+          fwrite($log, $result."\n");
           if (strcmp($result, $mailFromResponse)) {
-            $to = str_replace(",", "", $to);
-            $to = explode(" ", $to);
-            for ($i=0; $i < sizeof($to); $i++) {
-              $rcptTo = "rcpt to: " + $to[$i] + "\n";
-              echo "$rcptTo";
-              // socket_write($socket, $rcptTo, strlen($rcptTo)) or die("Could not send data to server\n");
-              // $result = socket_read($socket, 1024) or die("Could not read server response\n");
+            sleep(2);
+            socket_write($socket, $dataRequest, strlen($dataRequest)) or die("Could not send data to server\n");
+            $result = socket_read($socket, 1024) or die("Could not read server response\n");
+            fwrite($log, $result."\n");
+            if (strcmp($result, $dataRequestResponse)) {
+              sleep(2);
+              socket_write($socket, $data, strlen($data)) or die("Could not send data to server\n");
+              sleep(2);
+              socket_write($socket, ".\n", strlen(".\n")) or die("Could not send data to server\n");
+              $result = socket_read($socket, 1024) or die("Could not read server response\n");
+              fwrite($log, $result."\n");
+              if (strcmp($result, $dataResponse)) {
+                sleep(2);
+                $to = str_replace(",", "", $to);
+                $to = explode(" ", $to);
+                for ($i=0; $i < sizeof($to); $i++) {
+                  $rcpt = "rcpt to: $to[$i]\n";
+                  socket_write($socket, $rcpt, strlen($rcpt)) or die("Could not send data to server\n");
+                  sleep(3);
+                  $result = socket_read($socket, 1024) or die("Could not read server response\n");
+                  fwrite($log, $result."\n");
+                  sleep(2);
+                }
+              }
+            } else {
+              //log
             }
-
           } else {
-            // log
+            //log
           }
         } else {
           //log
         }
         // get server response
-        $result = socket_read($socket, 1024) or die("Could not read server response\n");
-        echo "Reply From Server  :".$result;
       }
       // close socket
       socket_close($socket);
+      fclose($log);
     ?>
 
   </body>
