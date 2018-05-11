@@ -52,13 +52,12 @@
               fwrite($log, $result);
               sleep(2);
             }
-            if (strcmp($result, $mailFromResponse)) {
-              fwrite($log, "entre\n");
+            if (true) {
               sleep(2);
               socket_write($socket, $dataRequest, strlen($dataRequest)) or die("Could not send data to server\n");
               $result = socket_read($socket, 1024) or die("Could not read server response\n");
               fwrite($log, $result);
-              if (strcmp($result, $dataRequestResponse)) {
+              if (true) {
                 sleep(2);
                 socket_write($socket, $data, strlen($data)) or die("Could not send data to server\n");
                 sleep(2);
