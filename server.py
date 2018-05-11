@@ -29,7 +29,7 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 if len(sys.argv) != 3:
-    print("Correct usage: script, IP address, port number")
+    print("Correct usage: script <IP address> <port number>")
     exit()
 
 ipAddress = str(sys.argv[1])
@@ -135,7 +135,6 @@ def clientThread(connection, address):
                         logData.append("<" + address[0] + " " + str(address[1]) + "> has quit\n")
                         connection.send(response.encode('utf8'))
                         connection.close()
-                    # broadcast(messageToSend.encode('utf-8'), connection)
             except:
                 continue
 
