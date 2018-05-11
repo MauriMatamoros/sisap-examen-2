@@ -79,7 +79,7 @@ def clientThread(connection, address):
             if mail.isReady():
                 listOfMailsToBeSent.append(mail)
                 file = open("mail.txt", "a")
-                file.write("FROM:" + mail.getFrom() + "\n")
+                file.write("FROM: " + mail.getFrom() + "\n")
                 for rcpt in mail.getTo():
                     file.write("TO: " + rcpt + "\n")
                 file.write("Data\n")
