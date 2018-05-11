@@ -34,45 +34,40 @@
         $dataResponse = "250 Ok: queued as 12345\n";
         socket_write($socket, $helo, strlen($helo)) or die("Could not send data to server\n");
         $result = socket_read($socket, 1024) or die("Could not read server response\n");
-        fwrite($log, $result."\n");
+        fwrite($log, $result);
         if (strcmp($result, $heloResponse)) {
           sleep(2);
           socket_write($socket, $mailFrom, strlen($mailFrom)) or die("Could not send data to server\n");
           $result = socket_read($socket, 1024) or die("Could not read server response\n");
-          fwrite($log, $result."\n");
+          fwrite($log, $result);
           if (strcmp($result, $mailFromResponse)) {
             sleep(2);
-            socket_write($socket, $dataRequest, strlen($dataRequest)) or die("Could not send data to server\n");
-            $result = socket_read($socket, 1024) or die("Could not read server response\n");
-            fwrite($log, $result."\n");
-            if (strcmp($result, $dataRequestResponse)) {
-              sleep(2);
-              socket_write($socket, $data, strlen($data)) or die("Could not send data to server\n");
-              sleep(2);
-              socket_write($socket, ".\n", strlen(".\n")) or die("Could not send data to server\n");
+            $to = str_replace(",", "", $to);
+            $to = explode(" ", $to);
+            for ($i=0; $i < sizeof($to); $i++) {
+              $rcpt = "rcpt to: $to[$i]\n";
+              socket_write($socket, $rcpt, strlen($rcpt)) or die("Could not send data to server\n");
+              sleep(3);
               $result = socket_read($socket, 1024) or die("Could not read server response\n");
-              fwrite($log, $result."\n");
-              if (strcmp($result, $dataResponse)) {
-                sleep(2);
-                $to = str_replace(",", "", $to);
-                $to = explode(" ", $to);
-                for ($i=0; $i < sizeof($to); $i++) {
-                  $rcpt = "rcpt to: $to[$i]\n";
-                  socket_write($socket, $rcpt, strlen($rcpt)) or die("Could not send data to server\n");
-                  sleep(3);
-                  $result = socket_read($socket, 1024) or die("Could not read server response\n");
-                  fwrite($log, $result."\n");
-                  sleep(2);
-                }
-              }
-            } else {
-              //log
+              fwrite($log, $result);
+              sleep(2);
             }
-          } else {
-            //log
+            if (strcmp($result, $mailFromResponse)) {
+              fwrite($log, "entre\n");
+              sleep(2);
+              socket_write($socket, $dataRequest, strlen($dataRequest)) or die("Could not send data to server\n");
+              $result = socket_read($socket, 1024) or die("Could not read server response\n");
+              fwrite($log, $result);
+              if (strcmp($result, $dataRequestResponse)) {
+                sleep(2);
+                socket_write($socket, $data, strlen($data)) or die("Could not send data to server\n");
+                sleep(2);
+                socket_write($socket, ".\n", strlen(".\n")) or die("Could not send data to server\n");
+                $result = socket_read($socket, 1024) or die("Could not read server response\n");
+                fwrite($log, $result);
+              }
+            }
           }
-        } else {
-          //log
         }
         // get server response
       }
