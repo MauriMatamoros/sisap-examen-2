@@ -64,6 +64,12 @@
                 socket_write($socket, ".\n", strlen(".\n")) or die("Could not send data to server\n");
                 $result = socket_read($socket, 1024) or die("Could not read server response\n");
                 fwrite($log, $result);
+                if (true) {
+                  sleep(2);
+                  socket_write($socket, "quit\n", strlen("quit\n")) or die("Could not send data to server\n");
+                  $result = socket_read($socket, 1024) or die("Could not read server response\n");
+                  fwrite($log, $result);
+                }
               }
             }
           }
