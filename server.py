@@ -56,6 +56,17 @@ for i in lines:
     userList.append((data[0], data[1], data[2]))
 ips.close()
 
+def parser(string):
+    begining = string.find('@')
+    ending = string.find('.')
+    if string.find('.') == -1:
+        ending = len(string) - 1
+    returnString = ""
+    while begining < ending:
+        returnString += string[begining]
+        begining += 1
+    return returnString[1:]
+
 def relay(mail):
     for rcpt in mail.getTo():
         if "MAURICIO" in rcpt.upper():
@@ -71,8 +82,8 @@ def relay(mail):
                 time.sleep(1)
                 mailFrom = "from: " + str(mail.getFrom()) + "\n"
                 mailTo = "rcpt to: " + str(userList[index][0]) + "\n"
-                logData.append("sending: " + str(mailFrom))
-                logData.append("sending: " + str(mailTo))
+                logData.append("sending: <info@" + str(mailFrom) + ".com>")
+                logData.append("sending: <info@" + str(mailTo) + ".com>")
                 logData.append("sending: " + str(mail.getData()))
                 s.send(mailFrom.encode('utf8'))
                 time.sleep(1)
@@ -178,7 +189,7 @@ def clientThread(connection, address):
                 file = open("mail.txt", "a")
                 file.write("FROM: " + mail.getFrom() + "\n")
                 for rcpt in mail.getTo():
-                    file.write("TO: " + rcpt + "\n")
+                    file.write("TO: <info@" + rcpt + ".com>\n")
                 file.write("Data\n")
                 file.write(mail.getData() + "\n")
                 file.write("mailFinished\n")
@@ -214,7 +225,7 @@ def clientThread(connection, address):
                             connection.send(response.encode('utf8'))
                             logData.append(response)
                             connection.close()
-                    elif "HELO:" in message.upper():
+                    elif "HELO" in message.upper():
                         message = message.split()
                         message = message[1]
                         response = "250 " + str(message) + ", I am glad to meet you\n"
@@ -222,19 +233,15 @@ def clientThread(connection, address):
                         # time.sleep(1)
                         connection.send(response.encode('utf8'))
                     elif "MAIL FROM:" in message.upper():
-                        message = message.split(' ')
-                        message.pop(0)
-                        message.pop(0)
-                        mail.setFrom(message[0])
+                        message = parser(message)
+                        mail.setFrom(message)
                         response = "250 ok\n"
                         logData.append(response)
                         # time.sleep(1)
                         connection.send(response.encode('utf8'))
                     elif "RCPT TO:" in message.upper():
-                        message = message.split(' ')
-                        message.pop(0)
-                        message.pop(0)
-                        mail.setTo(message[0])
+                        message = parser(message)
+                        mail.setTo(message)
                         response = "250 ok\n"
                         logData.append(response)
                         # time.sleep(1)

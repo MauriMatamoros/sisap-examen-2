@@ -1,5 +1,5 @@
 esmeralda 10.8.0.16 25
-eddy 10.8.0.10 25
-alvaro 10.8.0.20 25
+eddy 10.8.0.18 25
+alvaro 10.8.0.10 25
 michelle 10.8.0.18 25
 mauricio 10.8.0.14 25
