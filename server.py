@@ -1,5 +1,6 @@
 import socket
 import sys
+import syslog
 import _thread
 import time
 
@@ -39,6 +40,7 @@ port = int(sys.argv[2])
 server.bind((ipAddress, port))
 server.listen(7)
 
+syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
 listOfClients = []
 listOfMailsToBeSent = []
 logData = []
@@ -66,6 +68,7 @@ def logThread(logData):
     while True:
         log = open("log.txt", "a")
         for data in logData:
+            syslog.syslog("SMTP Server: "  + data)
             log.write(data)
             logData.remove(data)
         log.close()
@@ -156,3 +159,4 @@ while True:
 
 conn.close()
 server.close()
+syslog.close()
