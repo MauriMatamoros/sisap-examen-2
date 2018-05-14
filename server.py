@@ -44,6 +44,59 @@ syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
 listOfClients = []
 listOfMailsToBeSent = []
 logData = []
+rubyData = []
+userList = []
+
+ips = open('./ips.txt', 'r')
+lines = ips.readlines()
+userList = []
+
+for i in lines:
+    data = i[:-1].split()
+    userList.append((data[0], data[1], data[2]))
+
+ips.close()
+
+def userInList(userToCheck):
+    for user in userList:
+        if user[0] == userToCheck:
+            return True
+
+def sendToRuby(user):
+    rubyData = []
+    mailbox = open('./mail.txt', 'r')
+    mails = mailbox.readlines()
+    mailToMe = 0
+    hasMe = False
+    startIndex = 0
+    startOfHasMe = False
+    finishIndex = 0
+    finishOfHasMe = False
+    userToCheckFor = "to: " + str(user)
+    data = []
+    for index, mail in enumerate(mails):
+        if "FROM: " in mail.upper():
+            startIndex = index
+            startOfHasMe = True
+
+        if userToCheckFor.upper() in mail.upper():
+            mailToMe = index
+            hasMe = True
+
+        if "mailFinished" in mail and hasMe:
+            finishIndex = index
+            finishOfHasMe = True
+
+        if finishOfHasMe and hasMe and startOfHasMe:
+            finishOfHasMe = False
+            hasMe = False
+            startOfHasMe = False
+            while startIndex < finishIndex:
+                data.append(mails[startIndex])
+                startIndex += 1
+    return data
+    mailbox.close()
+
 
 def remove(connection):
     if connection in listOfClients:
@@ -76,6 +129,7 @@ def logThread(logData):
 def clientThread(connection, address):
     connection.send("Welcome!\n".encode('utf-8'))
     inputData = False
+    ruby = False
     data = ""
     mail = Mail()
     while True:
@@ -87,6 +141,7 @@ def clientThread(connection, address):
                     file.write("TO: " + rcpt + "\n")
                 file.write("Data\n")
                 file.write(mail.getData() + "\n")
+                file.write("mailFinished\n")
                 file.close()
                 printMails(listOfMailsToBeSent)
                 mail = Mail()
@@ -106,6 +161,19 @@ def clientThread(connection, address):
                             time.sleep(1)
                             connection.send(response.encode('utf8'))
                             inputData = False
+                    elif ruby:
+                        if userInList(message):
+                            logData.append(message + "\n")
+                            response = "user has an inbox\n"
+                            connection.send(response.encode('utf8'))
+                            logData.append(response)
+                            data = sendToRuby(message)
+                            for line in data:
+                                connection.send(line.encode('utf8'))
+                            response = "To view your mail again or view newest mail re-run the ruby script\n"
+                            connection.send(response.encode('utf8'))
+                            logData.append(response)
+                            connection.close()
                     elif "HELO:" in message.upper():
                         message = message.split()
                         message = message[1]
@@ -145,6 +213,8 @@ def clientThread(connection, address):
                         time.sleep(1)
                         connection.send(response.encode('utf8'))
                         connection.close()
+                    elif "RUBY" in message.upper():
+                        ruby = True
             except:
                 continue
 
