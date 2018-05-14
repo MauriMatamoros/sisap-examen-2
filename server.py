@@ -165,7 +165,7 @@ def logThread(logData):
         log.close()
 
 def clientThread(connection, address):
-    connection.send("Welcome!\n".encode('utf-8'))
+    connection.send("220 smtp.example.com ESMTP Postfix\n".encode('utf-8'))
     inputData = False
     ruby = False
     data = ""
@@ -198,7 +198,7 @@ def clientThread(connection, address):
                             mail.setData(data)
                             response = "250 Ok: queued as 12345\n"
                             logData.append(response)
-                            time.sleep(1)
+                            # time.sleep(1)
                             connection.send(response.encode('utf8'))
                             inputData = False
                     elif ruby:
@@ -219,7 +219,7 @@ def clientThread(connection, address):
                         message = message[1]
                         response = "250 " + str(message) + ", I am glad to meet you\n"
                         logData.append(response)
-                        time.sleep(1)
+                        # time.sleep(1)
                         connection.send(response.encode('utf8'))
                     elif "MAIL FROM:" in message.upper():
                         message = message.split(' ')
@@ -228,7 +228,7 @@ def clientThread(connection, address):
                         mail.setFrom(message[0])
                         response = "250 ok\n"
                         logData.append(response)
-                        time.sleep(1)
+                        # time.sleep(1)
                         connection.send(response.encode('utf8'))
                     elif "RCPT TO:" in message.upper():
                         message = message.split(' ')
@@ -237,20 +237,20 @@ def clientThread(connection, address):
                         mail.setTo(message[0])
                         response = "250 ok\n"
                         logData.append(response)
-                        time.sleep(1)
+                        # time.sleep(1)
                         connection.send(response.encode('utf8'))
                     elif "DATA" in message.upper():
                         inputData = True
                         response = "354 End data with <CR><LF>.<CR><LF>\n"
                         logData.append(response)
-                        time.sleep(1)
+                        # time.sleep(1)
                         connection.send(response.encode('utf8'))
                     elif "QUIT" in message.upper():
                         remove(connection)
                         response = "221 Bye\n"
                         logData.append(response)
                         logData.append("<" + address[0] + " " + str(address[1]) + "> has quit\n")
-                        time.sleep(1)
+                        # time.sleep(1)
                         connection.send(response.encode('utf8'))
                         connection.close()
                         relay(sendingMail)

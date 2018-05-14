@@ -24,7 +24,7 @@
       $to = $_POST['to'];
       $data = $_POST['data'];
       $host = "127.0.0.1";
-      $port = 4445;
+      $port = 25;
       // create socket
       $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket\n");
       if (strlen($from) > 0 and strlen($to) > 0 and strlen($data) > 0) {

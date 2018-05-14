@@ -5,8 +5,8 @@ stayConnected = true;
 puts("Whats your name?")
 
 name = gets
-hostname = '127.0.0.1'
-port = 4445
+hostname = '10.8.0.14'
+port = 25
 s = TCPSocket.open(hostname, port)
 s.send("ruby\n", 0)
 sleep(3)
