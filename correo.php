@@ -23,7 +23,7 @@
       $from = $_POST['from'];
       $to = $_POST['to'];
       $data = $_POST['data'];
-      $host = "127.0.0.1";
+      $host = "10.8.0.14";
       $port = 25;
       // create socket
       $socket = socket_create(AF_INET, SOCK_STREAM, 0) or die("Could not create socket\n");
@@ -31,7 +31,7 @@
         // connect to server
         $result = socket_connect($socket, $host, $port) or die("Could not connect to server\n");
         // send strings to server
-        $helo = "helo: phpClient\n";
+        $helo = "helo phpClient\n";
         $heloResponse = "250 $from, I am glad to meet you\n";
         $mailFrom = "mail from: $from\n";
         $mailFromResponse = "250 ok\n";
