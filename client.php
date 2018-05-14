@@ -41,7 +41,7 @@
       $inputAvailable = false;
       if ($mysqli->connect_errno) {
         printf("Connect failed: %s\n", $mysqli->connect_error);
-        syslog(LOG_ERR, "Connect failed: " + $mysqli->connect_error);
+        syslog(LOG_ERR, "ERROR, Connect failed: " + $mysqli->connect_error);
         exit();
       }
       //register

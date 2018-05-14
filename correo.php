@@ -9,9 +9,16 @@
       <input type="text" name="from" placeholder="From"><br>
       <input type="text" name="to" placeholder="To"><br>
       <textarea name="data"></textarea>
+      <select name="taskOption">
+        <option value="info">info</option>
+        <option value="error">error</option>
+      </select>
       <input type="submit" value="Submit">
     </form>
     <?php
+      openlog('smtpClient', LOG_CONS | LOG_NDELAY | LOG_PID, LOG_USER | LOG_PERROR);
+      $logArray = [];
+      $option = $_POST['taskOption'];
       $log = fopen('log.txt', 'a');
       $from = $_POST['from'];
       $to = $_POST['to'];
@@ -35,11 +42,13 @@
         socket_write($socket, $helo, strlen($helo)) or die("Could not send data to server\n");
         $result = socket_read($socket, 1024) or die("Could not read server response\n");
         fwrite($log, $result);
+        array_push($logArray, $result);
         if (strcmp($result, $heloResponse)) {
           sleep(2);
           socket_write($socket, $mailFrom, strlen($mailFrom)) or die("Could not send data to server\n");
           $result = socket_read($socket, 1024) or die("Could not read server response\n");
           fwrite($log, $result);
+          array_push($logArray, $result);
           if (strcmp($result, $mailFromResponse)) {
             sleep(2);
             $to = str_replace(",", "", $to);
@@ -50,6 +59,7 @@
               sleep(3);
               $result = socket_read($socket, 1024) or die("Could not read server response\n");
               fwrite($log, $result);
+              array_push($logArray, $result);
               sleep(2);
             }
             if (true) {
@@ -57,6 +67,7 @@
               socket_write($socket, $dataRequest, strlen($dataRequest)) or die("Could not send data to server\n");
               $result = socket_read($socket, 1024) or die("Could not read server response\n");
               fwrite($log, $result);
+              array_push($logArray, $result);
               if (true) {
                 sleep(2);
                 socket_write($socket, $data, strlen($data)) or die("Could not send data to server\n");
@@ -64,11 +75,13 @@
                 socket_write($socket, ".\n", strlen(".\n")) or die("Could not send data to server\n");
                 $result = socket_read($socket, 1024) or die("Could not read server response\n");
                 fwrite($log, $result);
+                array_push($logArray, $result);
                 if (true) {
                   sleep(2);
                   socket_write($socket, "quit\n", strlen("quit\n")) or die("Could not send data to server\n");
                   $result = socket_read($socket, 1024) or die("Could not read server response\n");
                   fwrite($log, $result);
+                  array_push($logArray, $result);
                 }
               }
             }
@@ -77,8 +90,17 @@
         // get server response
       }
       // close socket
+      if (($result == "Could not read server response\n") and ($option == "error")) {
+        syslog(LOG_ERR, "ERROR, mail erros with ready data");
+      }
+      if ($option == "info") {
+        foreach ($logArray as $entry) {
+          syslog(LOG_INFO, "INFO, recieved $entry from server");
+        }
+      }
       socket_close($socket);
       fclose($log);
+      closelog();
     ?>
 
   </body>
