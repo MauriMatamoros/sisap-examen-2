@@ -54,8 +54,46 @@ userList = []
 for i in lines:
     data = i[:-1].split()
     userList.append((data[0], data[1], data[2]))
-
 ips.close()
+
+def relay(mail):
+    for rcpt in mail.getTo():
+        if "MAURICIO" in rcpt.upper():
+            pass
+        else:
+            index = getIndexOfUser(rcpt)
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                host = userList[index][1]
+                port = int(userList[index][2])
+                s.connect((host, port))
+                s.send("helo: mauricio\n".encode('utf8'))
+                time.sleep(1)
+                mailFrom = "from: " + str(mail.getFrom()) + "\n"
+                mailTo = "rcpt to: " + str(userList[index][0]) + "\n"
+                logData.append("sending: " + str(mailFrom))
+                logData.append("sending: " + str(mailTo))
+                logData.append("sending: " + str(mail.getData()))
+                s.send(mailFrom.encode('utf8'))
+                time.sleep(1)
+                s.send(mailTo.encode('utf8'))
+                time.sleep(1)
+                s.send("data\n".encode('utf8'))
+                time.sleep(1)
+                s.send(mail.getData().encode('utf8'))
+                time.sleep(1)
+                s.send(".\n".encode('utf8'))
+                s.send("quit\n".encode('utf8'))
+                time.sleep(1)
+                s.close()
+            except:
+                logData.append("could not send mail to " + str(userList[index][0]))
+
+
+def getIndexOfUser(userToCheck):
+    for index, user in enumerate(userList):
+        if user[0] == userToCheck:
+            return index
 
 def userInList(userToCheck):
     for user in userList:
@@ -132,8 +170,10 @@ def clientThread(connection, address):
     ruby = False
     data = ""
     mail = Mail()
+    sendingMail = mail
     while True:
             if mail.isReady():
+                sendingMail = mail
                 listOfMailsToBeSent.append(mail)
                 file = open("mail.txt", "a")
                 file.write("FROM: " + mail.getFrom() + "\n")
@@ -213,8 +253,13 @@ def clientThread(connection, address):
                         time.sleep(1)
                         connection.send(response.encode('utf8'))
                         connection.close()
+                        relay(sendingMail)
+                        sendingMail = Mail()
                     elif "RUBY" in message.upper():
                         ruby = True
+                    else:
+                        badCommand = "errorBadCommand " + message + "\n"
+                        logData.append(badCommand)
             except:
                 continue
 
